@@ -1,0 +1,5 @@
+name,mobile,email,password,batch
+John Doe,9876543210,john@example.com,pass123,
+Jane Smith,8765432109,jane@example.com,securepass,
+Alice Johnson,7654321098,alice@example.com,,
+Bob Wilson,6543210987,bob@example.com,mypass,

@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Abhyo Platform - Business Presentation</title>
+
+    <!-- Reveal.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Modern Animated Background */
+        body {
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #020617);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            font-family: 'Inter', sans-serif;
+            color: #e2e8f0;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .shape {
+            position: fixed; filter: blur(80px); z-index: 0; opacity: 0.5; border-radius: 50%;
+        }
+        .shape-1 { width: 400px; height: 400px; background: #6366f1; top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: #ec4899; bottom: -150px; right: -100px; }
+        .shape-3 { width: 300px; height: 300px; background: #14b8a6; top: 40%; left: 50%; transform: translate(-50%, -50%); }
+
+        .reveal { z-index: 10; }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            font-family: 'Outfit', sans-serif; text-transform: none; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 20px;
+        }
+
+        .gradient-text { background: linear-gradient(to right, #818cf8, #c084fc, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
+        .gradient-text-alt { background: linear-gradient(to right, #34d399, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
+        .gradient-text-gold { background: linear-gradient(to right, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
+
+        .reveal p { font-family: 'Inter', sans-serif; font-size: 0.85em; line-height: 1.6; color: #cbd5e1; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px; padding: 30px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: left; height: 100%;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: stretch; margin-top: 30px; }
+        
+        .reveal ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 15px; }
+        .reveal li { font-size: 0.8em; display: flex; align-items: flex-start; gap: 12px; color: #f1f5f9; line-height: 1.5; }
+
+        .icon-box {
+            display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 10px;
+            background: rgba(99, 102, 241, 0.2); color: #818cf8; flex-shrink: 0; font-size: 0.8em;
+        }
+        
+        .icon-emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .icon-rose { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+
+        .slide-header { text-align: center; margin-bottom: 40px; }
+        .highlight-badge {
+            display: inline-block; background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 50px;
+            font-size: 0.4em; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .problem-box { border-left: 4px solid #f43f5e; padding-left: 20px; margin-bottom: 25px; }
+        .solution-box { border-left: 4px solid #10b981; padding-left: 20px; }
+        
+        .problem-title { color: #fb7185; font-family: 'Outfit'; font-weight: bold; font-size: 1.1em; display: flex; align-items: center; gap: 10px; margin-bottom: 5px;}
+        .solution-title { color: #34d399; font-family: 'Outfit'; font-weight: bold; font-size: 1.1em; display: flex; align-items: center; gap: 10px; margin-bottom: 5px;}
+    </style>
+</head>
+<body>
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+
+    <div class="reveal">
+        <div class="slides">
+            
+            <!-- Slide 1: Title -->
+            <section data-transition="zoom">
+                <div class="highlight-badge text-indigo-300">The Ultimate EdTech Solution</div>
+                <h1 style="font-size: 3.5em; margin-bottom: 10px;">The <span class="gradient-text">Abhyo</span> Platform</h1>
+                <h3 style="color: #94a3b8; font-weight: 400; font-family: 'Inter';">Solving the Biggest Problems for Institutes & Students</h3>
+                <p style="font-size: 0.5em; margin-top: 40px; color: #64748b; letter-spacing: 1px;">PRESS SPACEBAR TO NAVIGATE</p>
+            </section>
+
+            <!-- Slide 2: General Overview -->
+            <section data-transition="fade">
+                <div class="slide-header">
+                    <h2>The <span class="gradient-text">Current State</span> of EdTech</h2>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="glass-card" style="border: 1px solid rgba(244, 63, 94, 0.3);">
+                        <h3 style="color: #fb7185; text-align: center;"><i class="fa-solid fa-xmark"></i> The Problem</h3>
+                        <p style="text-align: center; margin-top: 20px;">Institutes are forced to use 4 different apps:<br>WhatsApp for communication, YouTube for videos, Google Forms for tests, and Excel for attendance.</p>
+                        <p style="text-align: center; margin-top: 10px; font-weight: bold;">Result: Data chaos, lost revenue, and poor student experience.</p>
+                    </div>
+                    <div class="glass-card" style="border: 1px solid rgba(16, 185, 129, 0.3);">
+                        <h3 style="color: #34d399; text-align: center;"><i class="fa-solid fa-check"></i> The Abhyo Solution</h3>
+                        <p style="text-align: center; margin-top: 20px;">A singular, centralized ecosystem. From live classes to mock tests, digital attendance to course sales—everything happens in one unified portal.</p>
+                        <p style="text-align: center; margin-top: 10px; font-weight: bold;">Result: Massive time savings and higher student retention.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SECTION: WHY INSTITUTES LOVE ABHYO         -->
+            <!-- ========================================== -->
+            <section>
+                <section data-transition="slide">
+                    <h1 style="font-size: 4em;"><i class="fa-solid fa-building-columns text-purple-400"></i></h1>
+                    <h2>Solutions for <span class="gradient-text">Institutes</span></h2>
+                    <p>How we solve everyday administrative and teaching nightmares.</p>
+                </section>
+
+                <section>
+                    <div class="slide-header"><h2>1. Content & Course Delivery</h2></div>
+                    <div class="glass-card">
+                        <div class="problem-box">
+                            <div class="problem-title"><i class="fa-solid fa-thumbs-down"></i> Problem: Scattered Study Materials</div>
+                            <p>Teachers send YouTube links on WhatsApp, email PDF notes separately, and conduct quizzes elsewhere. Students constantly lose track of where to study.</p>
+                        </div>
+                        <div class="solution-box">
+                            <div class="solution-title"><i class="fa-solid fa-lightbulb"></i> Solution: The Master Course Builder</div>
+                            <p>We provide a centralized Course Builder. Within a single 'Module', a teacher can embed a Video Lecture, attach downloadable PDF Notes, and append a Quiz. It provides a linear, organized learning path for the student.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="slide-header"><h2>2. Conducting Assessments</h2></div>
+                    <div class="glass-card">
+                        <div class="problem-box">
+                            <div class="problem-title"><i class="fa-solid fa-thumbs-down"></i> Problem: Time-Consuming Test Creation</div>
+                            <p>Typing out hundreds of questions for mock tests takes days. Managing Hindi and English versions doubles the workload. Checking answers manually is impossible at scale.</p>
+                        </div>
+                        <div class="solution-box">
+                            <div class="solution-title"><i class="fa-solid fa-lightbulb"></i> Solution: Bilingual Bulk Uploads & Auto-Grading</div>
+                            <p>Institutes can upload a single CSV file to instantly import thousands of questions in <strong>both English and Hindi</strong> simultaneously. Our Assessment Engine lets you build Mock Tests in seconds, and auto-evaluates student answers instantly.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="slide-header"><h2>3. Administration & HR</h2></div>
+                    <div class="glass-card">
+                        <div class="problem-box">
+                            <div class="problem-title"><i class="fa-solid fa-thumbs-down"></i> Problem: Security & Staff Chaos</div>
+                            <p>Giving all staff the master admin password is a huge security risk. Also, onboarding 500 offline students to an online app manually takes weeks.</p>
+                        </div>
+                        <div class="solution-box">
+                            <div class="solution-title"><i class="fa-solid fa-lightbulb"></i> Solution: RBAC & Bulk Onboarding</div>
+                            <p><strong>RBAC (Role-Based Access):</strong> Create restricted accounts for Teachers (only teach) and Operators (only upload).<br>
+                            <strong>Bulk Onboarding:</strong> Upload 500 students via a single CSV file. The system instantly generates digital ID cards for all of them.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="slide-header"><h2>4. Student Tracking</h2></div>
+                    <div class="glass-card">
+                        <div class="problem-box">
+                            <div class="problem-title"><i class="fa-solid fa-thumbs-down"></i> Problem: Paper Attendance Registers</div>
+                            <p>Tracking daily attendance on paper is inefficient and makes it impossible to provide quick reports to concerned parents.</p>
+                        </div>
+                        <div class="solution-box">
+                            <div class="solution-title"><i class="fa-solid fa-lightbulb"></i> Solution: Digital Attendance System</div>
+                            <p>Select a date and a batch. The roster appears, and you simply click Present/Absent/Late. The system calculates percentages automatically, allowing you to instantly identify drop-outs or disengaged students.</p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SECTION: WHY STUDENTS LOVE ABHYO           -->
+            <!-- ========================================== -->
+            <section>
+                <section data-transition="slide">
+                    <h1 style="font-size: 4em;"><i class="fa-solid fa-user-graduate text-emerald-400"></i></h1>
+                    <h2>Solutions for <span class="gradient-text-alt">Students</span></h2>
+                    <p>Creating an environment built for focus, accuracy, and engagement.</p>
+                </section>
+
+                <section>
+                    <div class="slide-header"><h2>1. Test Anxiety & Interface</h2></div>
+                    <div class="glass-card">
+                        <div class="problem-box">
+                            <div class="problem-title"><i class="fa-solid fa-thumbs-down"></i> Problem: Poor Testing Interfaces</div>
+                            <p>Taking tests on standard websites doesn't prepare students for actual Government/Competitive exams. The UI is usually just a long scrolling page of text.</p>
+                        </div>
+                        <div class="solution-box">
+                            <div class="solution-title"><i class="fa-solid fa-lightbulb"></i> Solution: Pro Exam Simulation UI</div>
+                            <p>Our Mock Test player replicates real-world testing environments. It features a sticky <strong>Question Palette grid</strong> showing exactly what is Answered vs Unanswered. It enforces strict countdown timers and handles negative marking accurately, training students for the real deal.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="slide-header"><h2>2. Clearing Doubts</h2></div>
+                    <div class="glass-card">
+                        <div class="problem-box">
+                            <div class="problem-title"><i class="fa-solid fa-thumbs-down"></i> Problem: Unanswered Questions</div>
+                            <p>If a student doesn't understand a concept in a recorded video, they have no easy way to ask the teacher without losing context or spamming WhatsApp groups.</p>
+                        </div>
+                        <div class="solution-box">
+                            <div class="solution-title"><i class="fa-solid fa-lightbulb"></i> Solution: Integrated Course Q&A Forums</div>
+                            <p>Directly beneath every course, there is a dedicated Q&A forum. Students post doubts, teachers reply, and common questions are "Pinned" to the top. The knowledge stays organized and attached to the course itself.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="slide-header"><h2>3. Staying Organized</h2></div>
+                    <div class="glass-card">
+                        <div class="problem-box">
+                            <div class="problem-title"><i class="fa-solid fa-thumbs-down"></i> Problem: "Where did I leave off?"</div>
+                            <p>Students struggle to remember which video they watched last, or when their next live class is scheduled.</p>
+                        </div>
+                        <div class="solution-box">
+                            <div class="solution-title"><i class="fa-solid fa-lightbulb"></i> Solution: The Student Dashboard</div>
+                            <p>The dashboard tracks progress automatically. Students see a "Resume Learning" button for exactly where they left off. Upcoming Live Classes have a countdown timer right on the home page so they never miss a session.</p>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- SECTION: MONETIZATION & GROWTH             -->
+            <!-- ========================================== -->
+            <section data-transition="zoom">
+                <div class="slide-header">
+                    <h2>Monetization & <span class="gradient-text-gold">Growth</span></h2>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="problem-box">
+                        <div class="problem-title"><i class="fa-solid fa-thumbs-down"></i> Problem: Low Sales & Invisible Websites</div>
+                        <p>Most LMS platforms are private. Google cannot index the courses, meaning zero organic search traffic. Plus, institutes miss out on passive ad revenue.</p>
+                    </div>
+                    <div class="solution-box">
+                        <div class="solution-title"><i class="fa-solid fa-lightbulb"></i> Solution: SEO & Smart AdSense</div>
+                        <p><strong>SEO Landing Pages:</strong> Every course automatically generates a stunning public page with meta-tags and schemas designed to rank on Google. Students can request enrollment directly from these pages.</p>
+                        <p><strong>Zero-Code AdSense:</strong> Super Admins can paste raw Google AdSense code into the dashboard. Abhyo dynamically injects ad banners across the site, creating a passive revenue stream without needing developers.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide: Conclusion -->
+            <section data-transition="zoom">
+                <div class="shape shape-3" style="width: 600px; height: 600px; background: #818cf8; top: 50%; z-index: -1;"></div>
+                <h1 style="font-size: 3.5em; margin-bottom: 20px;">The Ultimate Ecosystem</h1>
+                <h3 style="color: #cbd5e1; font-weight: 400;">Sell More. Teach Better. Grow Faster.</h3>
+                
+                <div style="margin-top: 60px;">
+                    <a href="/" class="glass-card" style="display: inline-block; padding: 15px 40px; text-decoration: none; color: white; font-weight: bold; font-size: 1.2em; border-radius: 50px;">
+                        End Presentation
+                    </a>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Reveal.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: 'c/t',
+            transition: 'slide',
+            backgroundTransition: 'fade',
+            center: true,
+            controls: true,
+            progress: true,
+            width: 1100,
+            height: 700,
+            margin: 0.1,
+            minScale: 0.2,
+            maxScale: 2.0
+        });
+    </script>
+</body>
+</html>

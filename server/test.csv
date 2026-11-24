@@ -1,0 +1,2 @@
+question,questionHindi,optionA,optionAHindi,optionB,optionBHindi,optionC,optionCHindi,optionD,optionDHindi,correctAnswer,subject,category,topic,difficulty,marks,negativeMarks,explanation,explanationHindi
+"What is the capital of India?","भारत की राजधानी क्या है?","Mumbai","मुंबई","New Delhi","नई दिल्ली","Kolkata","कोलकाता","Chennai","चेन्नई","B","Geography","General","Capitals","easy","2","0.5","New Delhi is the correct answer.","नई दिल्ली सही उत्तर है।"
