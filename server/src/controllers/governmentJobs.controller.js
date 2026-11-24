@@ -118,6 +118,62 @@ exports.webhookImportJobs = async (req, res) => {
         }
       }
 
+      // Resolve jobLevel & state (Support explicit n8n fields + smart auto-detection fallback)
+      let resolvedJobLevel = item.jobLevel || item.level || null;
+      let resolvedState = item.state || null;
+
+      if (!resolvedJobLevel || !['Central', 'State'].includes(resolvedJobLevel)) {
+        // Auto-detect based on category, organization, and title
+        const combinedText = `${rawTitle} ${organization} ${item.category || ''} ${item.subcategory || ''}`.toLowerCase();
+        
+        const stateKeywords = [
+          { name: 'Andhra Pradesh', keys: ['andhra pradesh', 'appsc', 'ap police', 'ap dsc'] },
+          { name: 'Arunachal Pradesh', keys: ['arunachal pradesh', 'appsc'] },
+          { name: 'Assam', keys: ['assam', 'apsc', 'assam police'] },
+          { name: 'Bihar', keys: ['bihar', 'bpsc', 'bpssc', 'bssc', 'bihar police'] },
+          { name: 'Chhattisgarh', keys: ['chhattisgarh', 'cgpsc', 'cg police', 'cg vyapam'] },
+          { name: 'Delhi (NCT)', keys: ['delhi', 'dsssb', 'delhi police'] },
+          { name: 'Goa', keys: ['goa', 'gpsc'] },
+          { name: 'Gujarat', keys: ['gujarat', 'gpsc', 'gsssb'] },
+          { name: 'Haryana', keys: ['haryana', 'hpsc', 'hssc', 'haryana police'] },
+          { name: 'Himachal Pradesh', keys: ['himachal pradesh', 'hppsc', 'hp police'] },
+          { name: 'Jharkhand', keys: ['jharkhand', 'jpsc', 'jssc'] },
+          { name: 'Karnataka', keys: ['karnataka', 'kpsc', 'karnataka police', 'ksrp'] },
+          { name: 'Kerala', keys: ['kerala', 'kpsc', 'kerala psc'] },
+          { name: 'Madhya Pradesh', keys: ['madhya pradesh', 'mppsc', 'mp police', 'mp vyapam', 'esb mp'] },
+          { name: 'Maharashtra', keys: ['maharashtra', 'mpsc', 'maha police', 'mahagenco'] },
+          { name: 'Manipur', keys: ['manipur', 'mpsc'] },
+          { name: 'Meghalaya', keys: ['meghalaya', 'mpsc'] },
+          { name: 'Mizoram', keys: ['mizoram', 'mpsc'] },
+          { name: 'Nagaland', keys: ['nagaland', 'npsc'] },
+          { name: 'Odisha', keys: ['odisha', 'opsc', 'ossc', 'osssc', 'odisha police'] },
+          { name: 'Punjab', keys: ['punjab', 'ppsc', 'psssb', 'punjab police'] },
+          { name: 'Rajasthan', keys: ['rajasthan', 'rpsc', 'rsmssb', 'rssb', 'rajasthan police'] },
+          { name: 'Sikkim', keys: ['sikkim', 'spsc'] },
+          { name: 'Tamil Nadu', keys: ['tamil nadu', 'tnpsc', 'tnusrb', 'tamilnadu'] },
+          { name: 'Telangana', keys: ['telangana', 'tspsc', 'tslprb'] },
+          { name: 'Tripura', keys: ['tripura', 'tpsc'] },
+          { name: 'Uttar Pradesh', keys: ['uttar pradesh', 'uppsc', 'upsssc', 'up police', 'up prpb'] },
+          { name: 'Uttarakhand', keys: ['uttarakhand', 'ukpsc', 'uksssc'] },
+          { name: 'West Bengal', keys: ['west bengal', 'wbpsc', 'wbprb', 'wb police'] },
+          { name: 'Jammu and Kashmir', keys: ['jammu and kashmir', 'jkpsc', 'jkssb'] },
+          { name: 'Chandigarh', keys: ['chandigarh'] },
+          { name: 'Ladakh', keys: ['ladakh'] },
+          { name: 'Puducherry', keys: ['puducherry'] }
+        ];
+
+        const matchedState = stateKeywords.find(st => st.keys.some(k => combinedText.includes(k)));
+        if (matchedState || (item.category && item.category.toLowerCase().includes('state psc'))) {
+          resolvedJobLevel = 'State';
+          resolvedState = matchedState ? matchedState.name : (item.state || null);
+        } else {
+          resolvedJobLevel = 'Central';
+          resolvedState = null;
+        }
+      } else if (resolvedJobLevel === 'Central') {
+        resolvedState = null;
+      }
+
       // Check duplicates
       let existing = null;
       if (sourceUrl) {
@@ -150,6 +206,8 @@ exports.webhookImportJobs = async (req, res) => {
             shortName: item.shortName || existing.shortName,
             category: item.category || existing.category,
             subcategory: item.subcategory || existing.subcategory,
+            jobLevel: resolvedJobLevel || existing.jobLevel || 'Central',
+            state: resolvedJobLevel === 'State' ? (resolvedState || existing.state) : null,
             description: item.description || existing.description,
             totalVacancies: totalVacancies || existing.totalVacancies,
             vacancyDetails: item.vacancyDetails || existing.vacancyDetails,
@@ -214,6 +272,8 @@ exports.webhookImportJobs = async (req, res) => {
         organization,
         category: (item.category || 'General').trim(),
         subcategory: item.subcategory || null,
+        jobLevel: resolvedJobLevel,
+        state: resolvedJobLevel === 'State' ? resolvedState : null,
         description: item.description || null,
         totalVacancies,
         vacancyDetails: Array.isArray(item.vacancyDetails) ? item.vacancyDetails : [],
