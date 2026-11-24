@@ -9,6 +9,7 @@ import {
 import { toast } from 'react-hot-toast';
 import api from '../../../lib/api';
 import GovernmentJobReviewModal from './GovernmentJobReviewModal';
+import { INDIAN_STATES } from '../../../constants/indianStates';
 
 export default function GovernmentJobsAdmin() {
   const [activeTab, setActiveTab] = useState('overview'); // overview, pending, all, published
@@ -24,6 +25,8 @@ export default function GovernmentJobsAdmin() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [levelFilter, setLevelFilter] = useState(''); // '', 'Central', 'State'
+  const [stateFilter, setStateFilter] = useState(''); // Specific state
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('DESC');
 
@@ -90,6 +93,8 @@ export default function GovernmentJobsAdmin() {
 
       if (search.trim()) params.search = search.trim();
       if (categoryFilter) params.category = categoryFilter;
+      if (levelFilter) params.jobLevel = levelFilter;
+      if (stateFilter) params.state = stateFilter;
 
       // Status override based on active tab
       if (activeTab === 'pending') {
@@ -117,7 +122,7 @@ export default function GovernmentJobsAdmin() {
     } finally {
       setLoadingJobs(false);
     }
-  }, [pagination.page, pagination.limit, sortBy, sortOrder, search, categoryFilter, statusFilter, activeTab]);
+  }, [pagination.page, pagination.limit, sortBy, sortOrder, search, categoryFilter, levelFilter, stateFilter, statusFilter, activeTab]);
 
   useEffect(() => {
     fetchStats();
@@ -692,6 +697,36 @@ export default function GovernmentJobsAdmin() {
                 ))}
               </select>
 
+              {/* Level filter (Central vs State) */}
+              <select
+                value={levelFilter}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLevelFilter(val);
+                  if (val !== 'State') setStateFilter('');
+                  setPagination(p => ({ ...p, page: 1 }));
+                }}
+                className="px-3 py-2 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-gray-700 font-medium"
+              >
+                <option value="">All Levels (Central & State)</option>
+                <option value="Central">🇮🇳 Central Level</option>
+                <option value="State">🏛️ State Level</option>
+              </select>
+
+              {/* State filter dropdown if State level chosen or state selected */}
+              {(levelFilter === 'State' || stateFilter) && (
+                <select
+                  value={stateFilter}
+                  onChange={(e) => { setStateFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                  className="px-3 py-2 border border-amber-300 rounded-xl text-xs bg-amber-50/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20 text-amber-900 font-semibold"
+                >
+                  <option value="">All States ({INDIAN_STATES.length})</option>
+                  {INDIAN_STATES.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+              )}
+
               {/* Status filter if in All Jobs tab */}
               {activeTab === 'all' && (
                 <select
@@ -723,11 +758,13 @@ export default function GovernmentJobsAdmin() {
                 <option value="title-ASC">Title (A-Z)</option>
               </select>
 
-              {(search || categoryFilter || (activeTab === 'all' && statusFilter)) && (
+              {(search || categoryFilter || levelFilter || stateFilter || (activeTab === 'all' && statusFilter)) && (
                 <button
                   onClick={() => {
                     setSearch('');
                     setCategoryFilter('');
+                    setLevelFilter('');
+                    setStateFilter('');
                     setStatusFilter('');
                   }}
                   className="px-2.5 py-2 text-xs text-rose-600 hover:bg-rose-50 rounded-xl transition-colors font-medium"
@@ -809,9 +846,20 @@ export default function GovernmentJobsAdmin() {
                           {/* Organization & Category */}
                           <td className="px-3 py-3">
                             <div className="font-medium text-gray-800 line-clamp-1">{job.organization || '—'}</div>
-                            <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700">
-                              {job.category || 'General'}
-                            </span>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700">
+                                {job.category || 'General'}
+                              </span>
+                              {job.jobLevel === 'State' ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                  🏛️ {job.state || 'State'}
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                  🇮🇳 Central
+                                </span>
+                              )}
+                            </div>
                           </td>
 
                           {/* Vacancies */}

@@ -323,6 +323,14 @@ exports.adminGetJobs = async (req, res) => {
       where.source = source;
     }
 
+    if (req.query.jobLevel && req.query.jobLevel !== 'all' && req.query.jobLevel !== 'All') {
+      where.jobLevel = req.query.jobLevel;
+    }
+
+    if (req.query.state && req.query.state !== 'all' && req.query.state !== 'All') {
+      where.state = req.query.state;
+    }
+
     if (search && search.trim()) {
       const q = `%${search.trim()}%`;
       where[Op.or] = [
@@ -483,7 +491,7 @@ exports.adminGetJobById = async (req, res) => {
 exports.adminCreateJob = async (req, res) => {
   try {
     const {
-      title, shortName, tagline, organization, category, subcategory, description,
+      title, shortName, tagline, organization, category, subcategory, jobLevel, state, description,
       totalVacancies, vacancyDetails, qualification, eligibilityDetails, ageLimit,
       salary, salaryDetails, applicationMode, applicationStartDate, applicationLastDate,
       applicationFee, howToApply, requiredDocuments, selectionProcess, examPattern,
@@ -505,6 +513,8 @@ exports.adminCreateJob = async (req, res) => {
       organization: organization.trim(),
       category: category || 'General',
       subcategory: subcategory || null,
+      jobLevel: jobLevel || 'Central',
+      state: jobLevel === 'State' ? (state || null) : null,
       description: description || null,
       totalVacancies: parseInt(totalVacancies) || 0,
       vacancyDetails: Array.isArray(vacancyDetails) ? vacancyDetails : [],
@@ -557,7 +567,7 @@ exports.adminUpdateJob = async (req, res) => {
     }
 
     const updatableFields = [
-      'title', 'shortName', 'tagline', 'organization', 'category', 'subcategory', 'description',
+      'title', 'shortName', 'tagline', 'organization', 'category', 'subcategory', 'jobLevel', 'state', 'description',
       'totalVacancies', 'vacancyDetails', 'qualification', 'eligibilityDetails', 'ageLimit',
       'salary', 'salaryDetails', 'applicationMode', 'applicationStartDate', 'applicationLastDate',
       'applicationFee', 'howToApply', 'requiredDocuments', 'selectionProcess', 'examPattern',
@@ -837,13 +847,21 @@ exports.publicGetJobs = async (req, res) => {
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 12));
     const offset = (page - 1) * limit;
 
-    const { category, search, deadlineFilter, featured } = req.query;
+    const { category, search, deadlineFilter, featured, jobLevel, state } = req.query;
 
     // RULE: Only published jobs can EVER appear publicly!
     const where = { status: 'published' };
 
     if (category && category !== 'All' && category !== 'all') {
       where.category = category;
+    }
+
+    if (jobLevel && jobLevel !== 'All' && jobLevel !== 'all') {
+      where.jobLevel = jobLevel;
+    }
+
+    if (state && state !== 'All' && state !== 'all') {
+      where.state = state;
     }
 
     if (featured === 'true') {

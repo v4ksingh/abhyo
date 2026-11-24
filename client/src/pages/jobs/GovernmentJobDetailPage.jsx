@@ -158,10 +158,14 @@ export default function GovernmentJobDetailPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
           <Link to="/" className="hover:text-indigo-600">Home</Link>
           <ChevronRight className="w-3 h-3" />
           <Link to="/government-jobs" className="hover:text-indigo-600">Government Jobs</Link>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-indigo-600 font-medium">
+            {job.jobLevel === 'State' ? (job.state ? `${job.state} Govt` : 'State Govt') : 'Central Govt'}
+          </span>
           <ChevronRight className="w-3 h-3" />
           <span className="text-gray-900 font-semibold truncate max-w-xs">{job.shortName || job.title}</span>
         </div>
@@ -174,6 +178,15 @@ export default function GovernmentJobDetailPage() {
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                   {job.category || 'Recruitment'}
                 </span>
+                {job.jobLevel === 'State' ? (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                    🏛️ {job.state ? `${job.state} Government` : 'State Government Recruitment'}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    🇮🇳 Central Government (All India)
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <ShieldCheck className="w-3.5 h-3.5" /> Officially Verified
                 </span>
@@ -206,31 +219,38 @@ export default function GovernmentJobDetailPage() {
           </div>
 
           {/* Quick Metrics Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8 pt-6 border-t border-gray-100">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-8 pt-6 border-t border-gray-100">
+            <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-100">
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Level / Jurisdiction</div>
+              <div className="text-xs sm:text-sm font-black text-gray-800 mt-1 truncate">
+                {job.jobLevel === 'State' ? `🏛️ ${job.state || 'State'}` : '🇮🇳 Central'}
+              </div>
+            </div>
+
             <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-100">
               <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Total Vacancies</div>
-              <div className="text-lg font-black text-indigo-600 mt-0.5">
+              <div className="text-base sm:text-lg font-black text-indigo-600 mt-0.5">
                 {job.totalVacancies ? `${job.totalVacancies.toLocaleString('en-IN')} Posts` : 'TBA'}
               </div>
             </div>
 
             <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-100">
               <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Salary Range</div>
-              <div className="text-sm font-bold text-gray-800 mt-1 line-clamp-1">
+              <div className="text-xs sm:text-sm font-bold text-gray-800 mt-1 line-clamp-1">
                 {job.salary || 'As per norms'}
               </div>
             </div>
 
             <div className="p-3 bg-gray-50/80 rounded-xl border border-gray-100">
               <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Start Date</div>
-              <div className="text-sm font-semibold text-gray-800 mt-1">
+              <div className="text-xs sm:text-sm font-semibold text-gray-800 mt-1">
                 {job.applicationStartDate || 'Open'}
               </div>
             </div>
 
-            <div className="p-3 bg-rose-50/60 rounded-xl border border-rose-100">
+            <div className="p-3 bg-rose-50/60 rounded-xl border border-rose-100 col-span-2 sm:col-span-1">
               <div className="text-[10px] text-rose-600 font-bold uppercase tracking-wider">Last Date to Apply</div>
-              <div className="text-sm font-bold text-rose-700 mt-1">
+              <div className="text-xs sm:text-sm font-bold text-rose-700 mt-1">
                 {job.applicationLastDate || 'Check Notification'}
               </div>
             </div>

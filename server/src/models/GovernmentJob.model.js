@@ -56,6 +56,17 @@ const GovernmentJob = sequelize.define('GovernmentJob', {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  jobLevel: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    defaultValue: 'Central',
+    comment: 'Central (All India) or State',
+  },
+  state: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    comment: 'State name for state-level vacancies (e.g. Bihar, Uttar Pradesh, Delhi)',
+  },
   description: {
     type: DataTypes.TEXT('long'),
     allowNull: true,

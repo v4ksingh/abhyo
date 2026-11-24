@@ -7,6 +7,7 @@ import {
   Flame, Award, MapPin, X, RotateCcw, TrendingUp, Compass, ArrowUpRight
 } from 'lucide-react';
 import usePageMeta from '../../hooks/usePageMeta';
+import { INDIAN_STATES } from '../../constants/indianStates';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -52,6 +53,8 @@ export default function GovernmentJobsListPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedLevel, setSelectedLevel] = useState('All'); // 'All', 'Central', 'State'
+  const [selectedState, setSelectedState] = useState(''); // Specific Indian state
   const [deadlineFilter, setDeadlineFilter] = useState('all'); // all, closingSoon, highVacancies
   const [sortBy, setSortBy] = useState('latest'); // latest, deadline, vacancies
   const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, pages: 1 });
@@ -108,6 +111,8 @@ export default function GovernmentJobsListPage() {
 
     if (search.trim()) params.append('search', search.trim());
     if (selectedCategory && selectedCategory !== 'All') params.append('category', selectedCategory);
+    if (selectedLevel && selectedLevel !== 'All') params.append('jobLevel', selectedLevel);
+    if (selectedState && selectedState !== 'All' && selectedState !== '') params.append('state', selectedState);
 
     fetch(`${API_BASE}/government-jobs?${params.toString()}`)
       .then(r => r.json())
@@ -129,12 +134,24 @@ export default function GovernmentJobsListPage() {
       });
 
     return () => { isMounted = false; };
-  }, [pagination.page, pagination.limit, search, selectedCategory]);
+  }, [pagination.page, pagination.limit, search, selectedCategory, selectedLevel, selectedState]);
 
   // Client-side quick filter and sorting
   const filteredJobs = useMemo(() => {
     let list = [...jobs];
     const now = new Date();
+
+    // Filter by Level (Central vs State)
+    if (selectedLevel === 'Central') {
+      list = list.filter(j => j.jobLevel !== 'State');
+    } else if (selectedLevel === 'State') {
+      list = list.filter(j => j.jobLevel === 'State');
+    }
+
+    // Filter by Specific State
+    if (selectedState) {
+      list = list.filter(j => j.state && j.state.toLowerCase() === selectedState.toLowerCase());
+    }
 
     if (deadlineFilter === 'closingSoon') {
       list = list.filter(j => {
@@ -160,7 +177,7 @@ export default function GovernmentJobsListPage() {
     }
 
     return list;
-  }, [jobs, deadlineFilter, sortBy]);
+  }, [jobs, selectedLevel, selectedState, deadlineFilter, sortBy]);
 
   // Total active vacancies count across loaded jobs
   const totalVacanciesCount = useMemo(() => {
@@ -356,18 +373,109 @@ export default function GovernmentJobsListPage() {
         {/* Category Pills & Quick Filter Controls */}
         <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-sm space-y-4">
           
+          {/* Level Filter Tabs (Central vs State) & State Dropdown */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-2xl w-fit flex-wrap">
+              <button
+                onClick={() => {
+                  setSelectedLevel('All');
+                  setSelectedState('');
+                  setPagination(p => ({ ...p, page: 1 }));
+                }}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                  selectedLevel === 'All'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Compass size={13} className={selectedLevel === 'All' ? 'text-indigo-600' : 'text-slate-400'} />
+                <span>All Opportunities</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedLevel('Central');
+                  setSelectedState('');
+                  setPagination(p => ({ ...p, page: 1 }));
+                }}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                  selectedLevel === 'Central'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-300'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>🇮🇳 Central Govt (All India)</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSelectedLevel('State');
+                  setPagination(p => ({ ...p, page: 1 }));
+                }}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                  selectedLevel === 'State'
+                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-300'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>🏛️ State Govt</span>
+              </button>
+            </div>
+
+            {/* State Selector Dropdown */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors">
+                <MapPin size={13} className="text-amber-600 shrink-0" />
+                <span className="text-slate-500 font-medium">State:</span>
+                <select
+                  value={selectedState}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedState(val);
+                    if (val) {
+                      setSelectedLevel('State');
+                    }
+                    setPagination(p => ({ ...p, page: 1 }));
+                  }}
+                  className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
+                >
+                  <option value="">All States & UTs (28 States + 8 UTs)</option>
+                  {INDIAN_STATES.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
+                </select>
+                {selectedState && (
+                  <button
+                    onClick={() => {
+                      setSelectedState('');
+                      setPagination(p => ({ ...p, page: 1 }));
+                    }}
+                    className="text-slate-400 hover:text-rose-600 ml-1 p-0.5 rounded-full hover:bg-slate-200 transition-colors"
+                    title="Clear State filter"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Category Tabs */}
           <div>
             <div className="flex items-center justify-between mb-3 px-1">
               <span className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Filter size={13} className="text-indigo-600" /> Browse by Department & Exam Board
               </span>
-              {selectedCategory !== 'All' && (
+              {(selectedCategory !== 'All' || selectedLevel !== 'All' || selectedState) && (
                 <button
-                  onClick={() => setSelectedCategory('All')}
+                  onClick={() => {
+                    setSelectedCategory('All');
+                    setSelectedLevel('All');
+                    setSelectedState('');
+                  }}
                   className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
                 >
-                  <RotateCcw size={12} /> Clear Filter
+                  <RotateCcw size={12} /> Reset Filters
                 </button>
               )}
             </div>
@@ -445,7 +553,7 @@ export default function GovernmentJobsListPage() {
         </div>
 
         {/* Results Counter Header */}
-        <div className="flex items-center justify-between text-xs sm:text-sm text-slate-500 px-1">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-slate-500 px-1">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
             <span>
@@ -453,11 +561,45 @@ export default function GovernmentJobsListPage() {
               <strong className="text-slate-900 font-extrabold">{pagination.total || filteredJobs.length}</strong> active opportunities
             </span>
           </div>
-          {selectedCategory !== 'All' && (
-            <span className="inline-flex items-center gap-1 font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">
-              Department: {selectedCategory}
-            </span>
-          )}
+
+          {/* Active Filter Pills */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {selectedLevel !== 'All' && (
+              <span className={`inline-flex items-center gap-1 font-bold px-2.5 py-1 rounded-md text-xs border ${
+                selectedLevel === 'Central' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-800 border-amber-200'
+              }`}>
+                {selectedLevel === 'Central' ? '🇮🇳 Central Govt' : '🏛️ State Level'}
+                <button
+                  onClick={() => { setSelectedLevel('All'); setSelectedState(''); }}
+                  className="hover:opacity-75 ml-1 p-0.5 rounded-full hover:bg-black/10"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+            {selectedState && (
+              <span className="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 text-xs">
+                🏛️ {selectedState}
+                <button
+                  onClick={() => setSelectedState('')}
+                  className="hover:opacity-75 ml-1 p-0.5 rounded-full hover:bg-black/10"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+            {selectedCategory !== 'All' && (
+              <span className="inline-flex items-center gap-1 font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100 text-xs">
+                Department: {selectedCategory}
+                <button
+                  onClick={() => setSelectedCategory('All')}
+                  className="hover:opacity-75 ml-1 p-0.5 rounded-full hover:bg-black/10"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            )}
+          </div>
         </div>
 
         {/* ── JOBS GRID ────────────────────────────────────────── */}
@@ -512,11 +654,22 @@ export default function GovernmentJobsListPage() {
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity" />
 
                   <div>
-                    {/* Top Row: Category & Urgency Badge */}
-                    <div className="flex items-center justify-between gap-2 mb-3.5">
-                      <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider border ${theme.pill}`}>
-                        {job.category || 'Government Job'}
-                      </span>
+                    {/* Top Row: Category, Level / State Badge & Urgency Badge */}
+                    <div className="flex items-center justify-between gap-2 mb-3.5 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider border ${theme.pill}`}>
+                          {job.category || 'Government Job'}
+                        </span>
+                        {job.jobLevel === 'State' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200 shadow-xs">
+                            🏛️ {job.state ? `${job.state} Govt` : 'State Govt'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 shadow-xs">
+                            🇮🇳 Central (All India)
+                          </span>
+                        )}
+                      </div>
                       {getDeadlineBadge(job.applicationLastDate)}
                     </div>
 
@@ -577,11 +730,17 @@ export default function GovernmentJobsListPage() {
                           </span>
                         </div>
                       )}
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium flex-wrap">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>Mode: <strong className="text-slate-700">{job.applicationMode || 'Online'}</strong></span>
                         <span className="text-slate-300">•</span>
-                        <span>All India / State</span>
+                        <span>
+                          {job.jobLevel === 'State' ? (
+                            <strong className="text-amber-700 font-bold">{job.state ? `${job.state} (State Level)` : 'State Govt'}</strong>
+                          ) : (
+                            <strong className="text-blue-700 font-bold">Central (All India)</strong>
+                          )}
+                        </span>
                       </div>
                     </div>
                   </div>

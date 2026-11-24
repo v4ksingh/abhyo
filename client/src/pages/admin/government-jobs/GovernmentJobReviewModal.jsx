@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   X, Check, AlertTriangle, ExternalLink, Calendar, Users, DollarSign,
-  FileText, ShieldCheck, CheckCircle2, XCircle, Globe, Send, Save, Trash2, Award, Plus
+  FileText, ShieldCheck, CheckCircle2, XCircle, Globe, Send, Save, Trash2, Award, Plus, MapPin
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../../lib/api';
+import { INDIAN_STATES } from '../../../constants/indianStates';
 
 export default function GovernmentJobReviewModal({ job, onClose, onRefresh, categories: propCategories = [] }) {
   const [activeTab, setActiveTab] = useState('basic');
@@ -31,6 +32,8 @@ export default function GovernmentJobReviewModal({ job, onClose, onRefresh, cate
     organization: job?.organization || '',
     category: job?.category || 'General',
     subcategory: job?.subcategory || '',
+    jobLevel: job?.jobLevel || 'Central',
+    state: job?.state || '',
     tagline: job?.tagline || '',
     description: job?.description || '',
     totalVacancies: job?.totalVacancies || 0,
@@ -405,6 +408,75 @@ export default function GovernmentJobReviewModal({ job, onClose, onRefresh, cate
                     </div>
                   )}
                 </div>
+
+                {/* Job Level: Central vs State & State Selection */}
+                <div className="md:col-span-2 p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <MapPin size={13} className="text-indigo-600" /> Vacancy Jurisdiction & Scope *
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      {formData.jobLevel === 'Central' ? '🇮🇳 Central Level (All India)' : `🏛️ State Level (${formData.state || 'Select State'})`}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Government Level</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { sf('jobLevel', 'Central'); sf('state', ''); }}
+                          className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                            formData.jobLevel === 'Central'
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                              : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span>🇮🇳</span> Central Level
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            sf('jobLevel', 'State');
+                            if (!formData.state) sf('state', 'Bihar');
+                          }}
+                          className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                            formData.jobLevel === 'State'
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                              : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span>🏛️</span> State Level
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">
+                        {formData.jobLevel === 'State' ? 'Applicable State *' : 'Coverage Scope'}
+                      </label>
+                      {formData.jobLevel === 'State' ? (
+                        <select
+                          value={formData.state || ''}
+                          onChange={e => sf('state', e.target.value)}
+                          className="w-full px-3.5 py-2 rounded-xl border border-emerald-300 text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none text-xs bg-white font-bold"
+                        >
+                          <option value="">-- Select Indian State --</option>
+                          {INDIAN_STATES.map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-500 text-xs font-medium flex items-center justify-between">
+                          <span>All India / Central Level</span>
+                          <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-md border border-blue-200">Central Govt</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">Tagline</label>
                   <input
