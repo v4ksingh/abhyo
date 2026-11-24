@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/abhyocom/public_html
+    - /bin/cp -R client/dist/* $DEPLOYPATH/
+    - /bin/cp -f client/dist/.htaccess $DEPLOYPATH/
+    - /bin/touch /home/abhyocom/repositories/abhyo/server/tmp/restart.txt 2>/dev/null || true
+    - /bin/touch /home/abhyocom/server/tmp/restart.txt 2>/dev/null || true

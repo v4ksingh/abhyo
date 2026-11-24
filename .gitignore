@@ -11,10 +11,8 @@ server/node_modules/
 *.env
 
 # Build outputs
-dist/
 dist-ssr/
 build/
-client/dist/
 *.tsbuildinfo
 
 # Uploads & User-generated media

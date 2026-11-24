@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Block private/authenticated routes
+Disallow: /admin/
+Disallow: /student/
+Disallow: /institute/
+Disallow: /instructor/
+Disallow: /checkout
+Disallow: /test/
+Disallow: /api/
+
+# Block auth pages from indexing
+Disallow: /login
+Disallow: /register
+Disallow: /otp-login
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://abhyo.com/sitemap.xml
