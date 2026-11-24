@@ -55,6 +55,46 @@ export default function GovernmentJobsListPage() {
   const [deadlineFilter, setDeadlineFilter] = useState('all'); // all, closingSoon, highVacancies
   const [sortBy, setSortBy] = useState('latest'); // latest, deadline, vacancies
   const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, pages: 1 });
+  const [dbCategories, setDbCategories] = useState([]);
+
+  // Fetch dynamic categories from /categories/public (managed at /admin/categories)
+  useEffect(() => {
+    fetch(`${API_BASE}/categories/public`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && res.data) {
+          setDbCategories(res.data);
+        }
+      })
+      .catch(err => console.error('Failed to load categories:', err));
+  }, []);
+
+  // Compute dynamic category pills
+  const displayCategories = useMemo(() => {
+    const list = [{ id: 'All', label: 'All Recruitments', icon: Compass }];
+    const seen = new Set(['All']);
+
+    dbCategories.forEach(c => {
+      if (c.name && !seen.has(c.name)) {
+        seen.add(c.name);
+        const iconMatch = QUICK_CATEGORIES.find(q => q.id.toLowerCase() === c.name.toLowerCase());
+        list.push({
+          id: c.name,
+          label: c.name,
+          icon: iconMatch?.icon || Building,
+        });
+      }
+    });
+
+    QUICK_CATEGORIES.forEach(q => {
+      if (!seen.has(q.id)) {
+        seen.add(q.id);
+        list.push(q);
+      }
+    });
+
+    return list;
+  }, [dbCategories]);
 
   // Fetch published jobs
   useEffect(() => {
@@ -333,7 +373,7 @@ export default function GovernmentJobsListPage() {
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-              {QUICK_CATEGORIES.map((cat) => {
+              {displayCategories.map((cat) => {
                 const Icon = cat.icon;
                 const active = selectedCategory === cat.id;
                 return (

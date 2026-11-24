@@ -477,6 +477,75 @@ exports.adminGetJobById = async (req, res) => {
 };
 
 /**
+ * POST /api/government-jobs/admin
+ * Create a new government job manually
+ */
+exports.adminCreateJob = async (req, res) => {
+  try {
+    const {
+      title, shortName, tagline, organization, category, subcategory, description,
+      totalVacancies, vacancyDetails, qualification, eligibilityDetails, ageLimit,
+      salary, salaryDetails, applicationMode, applicationStartDate, applicationLastDate,
+      applicationFee, howToApply, requiredDocuments, selectionProcess, examPattern,
+      importantDates, officialNotificationUrl, officialWebsite, applyLink, source,
+      sourceUrl, adminNotes, isFeatured, status,
+    } = req.body;
+
+    if (!title || !organization) {
+      return res.status(400).json({ success: false, error: 'Title and Organization are required' });
+    }
+
+    const slug = await generateUniqueSlug(shortName || title);
+
+    const job = await GovernmentJob.create({
+      title: title.trim(),
+      shortName: shortName ? shortName.trim() : null,
+      slug,
+      tagline: tagline || null,
+      organization: organization.trim(),
+      category: category || 'General',
+      subcategory: subcategory || null,
+      description: description || null,
+      totalVacancies: parseInt(totalVacancies) || 0,
+      vacancyDetails: Array.isArray(vacancyDetails) ? vacancyDetails : [],
+      qualification: Array.isArray(qualification) ? qualification : [],
+      eligibilityDetails: eligibilityDetails || null,
+      ageLimit: ageLimit || {},
+      salary: salary || null,
+      salaryDetails: Array.isArray(salaryDetails) ? salaryDetails : [],
+      applicationMode: applicationMode || 'Online',
+      applicationStartDate: applicationStartDate || null,
+      applicationLastDate: applicationLastDate || null,
+      applicationFee: Array.isArray(applicationFee) ? applicationFee : [],
+      howToApply: Array.isArray(howToApply) ? howToApply : [],
+      requiredDocuments: Array.isArray(requiredDocuments) ? requiredDocuments : [],
+      selectionProcess: Array.isArray(selectionProcess) ? selectionProcess : [],
+      examPattern: Array.isArray(examPattern) ? examPattern : [],
+      importantDates: Array.isArray(importantDates) ? importantDates : [],
+      officialNotificationUrl: officialNotificationUrl || null,
+      officialWebsite: officialWebsite || null,
+      applyLink: applyLink || null,
+      source: source || 'Manual Entry',
+      sourceUrl: sourceUrl || null,
+      adminNotes: adminNotes || null,
+      isFeatured: !!isFeatured,
+      status: status || 'approved',
+      aiExtracted: false,
+      verificationStatus: 'verified',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Government job created successfully',
+      data: job,
+    });
+  } catch (err) {
+    console.error('[adminCreateJob Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+/**
  * PUT /api/government-jobs/admin/:id
  * Edit government job details
  */

@@ -1,45 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X, Check, AlertTriangle, ExternalLink, Calendar, Users, DollarSign,
-  FileText, ShieldCheck, CheckCircle2, XCircle, Globe, Send, Save, Trash2, Award
+  FileText, ShieldCheck, CheckCircle2, XCircle, Globe, Send, Save, Trash2, Award, Plus
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../../lib/api';
 
-export default function GovernmentJobReviewModal({ job, onClose, onRefresh }) {
+export default function GovernmentJobReviewModal({ job, onClose, onRefresh, categories: propCategories = [] }) {
   const [activeTab, setActiveTab] = useState('basic');
+  const [dbCategories, setDbCategories] = useState(propCategories || []);
+
+  // Fetch categories from /categories API (same as /admin/categories)
+  useEffect(() => {
+    if (propCategories && propCategories.length > 0) {
+      setDbCategories(propCategories);
+      return;
+    }
+    api.get('/categories')
+      .then(res => {
+        if (res.data?.data) {
+          setDbCategories(res.data.data);
+        }
+      })
+      .catch(err => console.error('Failed to load categories:', err));
+  }, [propCategories]);
+
   const [formData, setFormData] = useState({
-    title: job.title || '',
-    shortName: job.shortName || '',
-    organization: job.organization || '',
-    category: job.category || 'General',
-    subcategory: job.subcategory || '',
-    tagline: job.tagline || '',
-    description: job.description || '',
-    totalVacancies: job.totalVacancies || 0,
-    vacancyDetails: Array.isArray(job.vacancyDetails) ? job.vacancyDetails : [],
-    qualification: Array.isArray(job.qualification) ? job.qualification : [],
-    eligibilityDetails: job.eligibilityDetails || '',
-    ageLimit: job.ageLimit || { minimum: '', maximum: '', calculationDate: '' },
-    salary: job.salary || '',
-    salaryDetails: Array.isArray(job.salaryDetails) ? job.salaryDetails : [],
-    applicationMode: job.applicationMode || 'Online',
-    applicationStartDate: job.applicationStartDate || '',
-    applicationLastDate: job.applicationLastDate || '',
-    applicationFee: Array.isArray(job.applicationFee) ? job.applicationFee : [],
-    howToApply: Array.isArray(job.howToApply) ? job.howToApply : [],
-    requiredDocuments: Array.isArray(job.requiredDocuments) ? job.requiredDocuments : [],
-    selectionProcess: Array.isArray(job.selectionProcess) ? job.selectionProcess : [],
-    examPattern: Array.isArray(job.examPattern) ? job.examPattern : [],
-    importantDates: Array.isArray(job.importantDates) ? job.importantDates : [],
-    officialNotificationUrl: job.officialNotificationUrl || '',
-    officialWebsite: job.officialWebsite || '',
-    applyLink: job.applyLink || '',
-    source: job.source || 'FreeJobAlert',
-    sourceUrl: job.sourceUrl || '',
-    adminNotes: job.adminNotes || '',
-    isFeatured: !!job.isFeatured,
+    title: job?.title || '',
+    shortName: job?.shortName || '',
+    organization: job?.organization || '',
+    category: job?.category || 'General',
+    subcategory: job?.subcategory || '',
+    tagline: job?.tagline || '',
+    description: job?.description || '',
+    totalVacancies: job?.totalVacancies || 0,
+    vacancyDetails: Array.isArray(job?.vacancyDetails) ? job.vacancyDetails : [],
+    qualification: Array.isArray(job?.qualification) ? job.qualification : [],
+    eligibilityDetails: job?.eligibilityDetails || '',
+    ageLimit: job?.ageLimit || { minimum: '', maximum: '', calculationDate: '' },
+    salary: job?.salary || '',
+    salaryDetails: Array.isArray(job?.salaryDetails) ? job.salaryDetails : [],
+    applicationMode: job?.applicationMode || 'Online',
+    applicationStartDate: job?.applicationStartDate || '',
+    applicationLastDate: job?.applicationLastDate || '',
+    applicationFee: Array.isArray(job?.applicationFee) ? job.applicationFee : [],
+    howToApply: Array.isArray(job?.howToApply) ? job.howToApply : [],
+    requiredDocuments: Array.isArray(job?.requiredDocuments) ? job.requiredDocuments : [],
+    selectionProcess: Array.isArray(job?.selectionProcess) ? job.selectionProcess : [],
+    examPattern: Array.isArray(job?.examPattern) ? job.examPattern : [],
+    importantDates: Array.isArray(job?.importantDates) ? job.importantDates : [],
+    officialNotificationUrl: job?.officialNotificationUrl || '',
+    officialWebsite: job?.officialWebsite || '',
+    applyLink: job?.applyLink || '',
+    source: job?.source || 'Manual Entry',
+    sourceUrl: job?.sourceUrl || '',
+    adminNotes: job?.adminNotes || '',
+    isFeatured: !!job?.isFeatured,
   });
+
+  // Dynamic Category options extracted from /admin/categories
+  const availableCategoryNames = useMemo(() => {
+    const names = new Set();
+    dbCategories.forEach(c => {
+      if (c.name) names.add(c.name.trim());
+    });
+    if (formData.category) names.add(formData.category.trim());
+    ['UPSC', 'SSC', 'Banking', 'Railway', 'Defence', 'State PSC', 'Teaching', 'Police', 'Apprenticeship', 'Engineering', 'Medical', 'General'].forEach(c => names.add(c));
+    return Array.from(names).filter(Boolean).sort();
+  }, [dbCategories, formData.category]);
+
+  // Dynamic Subcategory options from selected Category
+  const availableSubcategories = useMemo(() => {
+    const matched = dbCategories.find(c => c.name?.toLowerCase() === formData.category?.toLowerCase());
+    if (matched && Array.isArray(matched.subCategories) && matched.subCategories.length > 0) {
+      return matched.subCategories.map(s => s.name).filter(Boolean);
+    }
+    return [];
+  }, [dbCategories, formData.category]);
 
   const [saving, setSaving] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -80,9 +117,15 @@ export default function GovernmentJobReviewModal({ job, onClose, onRefresh }) {
     }
     setSaving(true);
     try {
-      await api.put(`/government-jobs/admin/${job.id}`, formData);
-      toast.success('Job details updated');
+      if (job?.id) {
+        await api.put(`/government-jobs/admin/${job.id}`, formData);
+        toast.success('Job details updated');
+      } else {
+        await api.post('/government-jobs/admin', formData);
+        toast.success('New recruitment created successfully');
+      }
       onRefresh();
+      if (!job?.id) onClose();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to save changes');
     } finally {
@@ -303,16 +346,30 @@ export default function GovernmentJobReviewModal({ job, onClose, onRefresh }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Category *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">Category *</label>
+                    <a
+                      href="/admin/categories"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1"
+                      title="Open Category Manager to add or edit categories"
+                    >
+                      + Manage Categories
+                    </a>
+                  </div>
                   <select
                     value={formData.category}
                     onChange={e => sf('category', e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white font-medium"
                   >
-                    {['General', 'SSC', 'Railway', 'Banking', 'Defence', 'State PSC', 'Teaching', 'Police', 'Apprenticeship', 'Engineering', 'Medical', 'Other'].map(c => (
+                    {availableCategoryNames.map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Fetched from Test Categories ({availableCategoryNames.length} options available)
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Subcategory</label>
@@ -321,8 +378,32 @@ export default function GovernmentJobReviewModal({ job, onClose, onRefresh }) {
                     placeholder="e.g. Officer Cadre, Technician"
                     value={formData.subcategory}
                     onChange={e => sf('subcategory', e.target.value)}
+                    list="subcategories-datalist"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                   />
+                  {availableSubcategories.length > 0 && (
+                    <datalist id="subcategories-datalist">
+                      {availableSubcategories.map(s => (
+                        <option key={s} value={s} />
+                      ))}
+                    </datalist>
+                  )}
+                  {availableSubcategories.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {availableSubcategories.map(s => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => sf('subcategory', s)}
+                          className={`text-[10px] px-2 py-0.5 rounded-md font-semibold transition-colors ${
+                            formData.subcategory === s ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">Tagline</label>

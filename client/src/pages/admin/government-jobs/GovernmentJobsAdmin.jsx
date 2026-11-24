@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Briefcase, CheckCircle2, Clock, XCircle, AlertTriangle, Sparkles,
   Search, Filter, ExternalLink, RefreshCw, Eye, Edit3, Check, X,
   Trash2, Star, Calendar, Building, Award, ArrowUpDown, ChevronLeft,
-  ChevronRight, ArrowRight, ShieldCheck, HelpCircle, Layers, FileText
+  ChevronRight, ArrowRight, ShieldCheck, HelpCircle, Layers, FileText, Plus
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../../lib/api';
@@ -25,6 +26,29 @@ export default function GovernmentJobsAdmin() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('DESC');
+
+  // Categories dynamically fetched from /categories (managed at /admin/categories)
+  const [dbCategories, setDbCategories] = useState([]);
+
+  // Fetch Categories from /categories API
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await api.get('/categories');
+      if (res.data?.data) {
+        setDbCategories(res.data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+    }
+  }, []);
+
+  // Combined Category Filter Options (dynamic + stats breakdown)
+  const filterCategoryOptions = useMemo(() => {
+    const set = new Set();
+    dbCategories.forEach(c => { if (c.name) set.add(c.name.trim()); });
+    stats?.categoryCounts?.forEach(c => { if (c.category) set.add(c.category.trim()); });
+    return Array.from(set).filter(Boolean).sort();
+  }, [dbCategories, stats?.categoryCounts]);
 
   // Selected Job for Modal
   const [selectedJob, setSelectedJob] = useState(null);
@@ -97,7 +121,8 @@ export default function GovernmentJobsAdmin() {
 
   useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+    fetchCategories();
+  }, [fetchStats, fetchCategories]);
 
   useEffect(() => {
     fetchJobs();
@@ -270,16 +295,47 @@ export default function GovernmentJobsAdmin() {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
+          <Link
+            to="/admin/categories"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-xs"
+            title="Manage categories at /admin/categories"
+          >
+            <Award className="w-4 h-4 text-indigo-600" />
+            Manage Categories
+          </Link>
+          <button
+            onClick={() => {
+              setSelectedJob({
+                id: null,
+                title: '',
+                shortName: '',
+                organization: '',
+                category: dbCategories[0]?.name || 'General',
+                subcategory: '',
+                tagline: '',
+                description: '',
+                totalVacancies: 0,
+                applicationMode: 'Online',
+                status: 'approved',
+                isFeatured: false,
+              });
+              setReviewModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-sm shadow-indigo-200 active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            Post New Job
+          </button>
           <button
             onClick={() => setShowN8nInfo(true)}
             className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors"
           >
             <HelpCircle className="w-4 h-4 text-indigo-600" />
-            n8n Webhook Details
+            n8n Webhook
           </button>
           <button
-            onClick={() => { fetchStats(); fetchJobs(); }}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-sm shadow-indigo-200"
+            onClick={() => { fetchStats(); fetchJobs(); fetchCategories(); }}
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-all"
           >
             <RefreshCw className="w-4 h-4" />
             Refresh
@@ -630,9 +686,9 @@ export default function GovernmentJobsAdmin() {
                 onChange={(e) => { setCategoryFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
                 className="px-3 py-2 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-gray-700"
               >
-                <option value="">All Categories</option>
-                {stats?.categoryCounts?.map((c, i) => (
-                  <option key={i} value={c.category}>{c.category}</option>
+                <option value="">All Categories ({filterCategoryOptions.length})</option>
+                {filterCategoryOptions.map((catName, i) => (
+                  <option key={i} value={catName}>{catName}</option>
                 ))}
               </select>
 
@@ -917,6 +973,7 @@ export default function GovernmentJobsAdmin() {
       {reviewModalOpen && selectedJob && (
         <GovernmentJobReviewModal
           job={selectedJob}
+          categories={dbCategories}
           onClose={() => {
             setReviewModalOpen(false);
             setSelectedJob(null);
@@ -924,6 +981,7 @@ export default function GovernmentJobsAdmin() {
           onRefresh={() => {
             fetchJobs();
             fetchStats();
+            fetchCategories();
           }}
         />
       )}

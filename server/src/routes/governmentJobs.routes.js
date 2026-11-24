@@ -14,6 +14,7 @@ router.post('/webhook', verifyWebhookApiKey, ctrl.webhookImportJobs);
 // ── 2. Admin Management Endpoints ───────────────────────────────────────────
 router.get('/admin/stats',           protect, canManageJobs, ctrl.adminGetStats);
 router.get('/admin',                 protect, canManageJobs, ctrl.adminGetJobs);
+router.post('/admin',                protect, canManageJobs, ctrl.adminCreateJob);
 router.get('/admin/:id',             protect, canManageJobs, ctrl.adminGetJobById);
 router.put('/admin/:id',             protect, canManageJobs, ctrl.adminUpdateJob);
 router.patch('/admin/:id/approve',   protect, canManageJobs, ctrl.adminApproveJob);
