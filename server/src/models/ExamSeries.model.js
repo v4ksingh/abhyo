@@ -18,6 +18,16 @@ const ExamSeries = sequelize.define('ExamSeries', {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  linkedExams: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Array of upcoming exam slugs or identifiers covered by this series',
+    get() {
+      const v = this.getDataValue('linkedExams');
+      if (typeof v === 'string') { try { return JSON.parse(v); } catch { return []; } }
+      return v || [];
+    },
+  },
 
   // Exam-specific metadata (stored as JSON for flexibility)
   examDetails: {

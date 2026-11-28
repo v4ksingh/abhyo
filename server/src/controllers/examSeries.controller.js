@@ -102,7 +102,7 @@ exports.createSeries = async (req, res) => {
         if (existing) {
           const updates = {};
           const fields = [
-            'tagline', 'description', 'category', 'subCategory',
+            'tagline', 'description', 'category', 'subCategory', 'linkedExams',
             'bannerImage', 'thumbnailImage', 'isFree', 'price',
             'isActive', 'isFeatured', 'examDetails'
           ];
@@ -128,6 +128,7 @@ exports.createSeries = async (req, res) => {
         description: item.description || '',
         category: finalCategory,
         subCategory: item.subCategory || null,
+        linkedExams: Array.isArray(item.linkedExams) ? item.linkedExams : (item.linkedExams ? [item.linkedExams] : []),
         examDetails: item.examDetails || {},
         eligibility: item.eligibility || [],
         syllabus: item.syllabus || [],
@@ -171,7 +172,7 @@ exports.updateSeries = async (req, res) => {
     if (!series) return res.status(404).json({ error: 'Not found' });
 
     const allowed = [
-      'title','examName','tagline','description','category','subCategory',
+      'title','examName','tagline','description','category','subCategory','linkedExams',
       'examDetails','eligibility','syllabus','examPattern',
       'importantDates','highlights','faqs',
       'selectionProcess','salaryDetails','howToApply','importantLinks',

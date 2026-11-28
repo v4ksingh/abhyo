@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Image, Upload, Table2, ImagePlus, X, Sparkles, Layers, DollarSign, CheckCircle2 } from 'lucide-react';
+import {
+  ChevronLeft, Image, Upload, Table2, ImagePlus, X, Sparkles,
+  Layers, DollarSign, CheckCircle2, Link2, Zap, BookmarkCheck
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../../lib/api';
 import Editor from 'react-simple-wysiwyg';
+import { EXAMS } from '../../data/examsData';
 
 const inputStyle = {
   width: '100%',
@@ -40,6 +44,11 @@ export default function ExamSeriesForm() {
   const [thumbnailPreview, setThumbnailPreview] = useState(editing?.thumbnailImage || editing?.thumbnail || '');
   const [thumbUploading, setThumbUploading] = useState(false);
 
+  // Upcoming Government Exams Quick Fill & Linking State
+  const [upcomingOptions, setUpcomingOptions] = useState(EXAMS);
+  const [selectedUpcomingExam, setSelectedUpcomingExam] = useState('');
+  const [examToLink, setExamToLink] = useState('');
+
   // Description editor extras
   const descImgInputRef = useRef(null);
   const [imgUploading, setImgUploading] = useState(false);
@@ -59,6 +68,7 @@ export default function ExamSeriesForm() {
     isActive: editing ? editing.isActive !== false : true,
     isFeatured: !!editing?.isFeatured,
     thumbnailImage: editing?.thumbnailImage || editing?.thumbnail || '',
+    linkedExams: Array.isArray(editing?.linkedExams) ? editing.linkedExams : (editing?.linkedExams ? [editing.linkedExams] : []),
     // Preserve legacy metadata in background if present on existing records
     examDetails: editing?.examDetails || {},
     eligibility: editing?.eligibility || [],
@@ -81,7 +91,92 @@ export default function ExamSeriesForm() {
     api.get('/categories')
       .then(res => setDbCategories(res.data.data || []))
       .catch(() => {});
+
+    // Also fetch live government jobs to combine with static EXAMS
+    api.get('/government-jobs?limit=50')
+      .then(res => {
+        if (res.data?.data && Array.isArray(res.data.data)) {
+          const liveGovJobs = res.data.data.map(j => ({
+            id: `job-${j.id}`,
+            slug: j.slug,
+            name: j.shortName || j.title,
+            category: j.category || 'Govt Job',
+            org: j.organization,
+            vacancies: j.totalVacancies,
+            desc: j.description || j.tagline,
+            eligibility: Array.isArray(j.qualification) ? j.qualification.join(', ') : j.qualification,
+            ageLimit: j.ageLimit?.minimum && j.ageLimit?.maximum ? `${j.ageLimit.minimum}–${j.ageLimit.maximum} years` : undefined,
+            startDate: j.applicationStartDate,
+            lastDate: j.applicationLastDate,
+            official: j.applyLink || j.officialWebsite,
+            isLiveJob: true,
+          }));
+          const seenSlugs = new Set(EXAMS.map(e => e.slug));
+          const extra = liveGovJobs.filter(j => !seenSlugs.has(j.slug));
+          setUpcomingOptions([...EXAMS, ...extra]);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  // Quick-fill handler from Upcoming Exams
+  const handleApplyAutofill = (examKey) => {
+    if (!examKey) return;
+    const exam = upcomingOptions.find(e => (e.slug || e.id) === examKey || e.name === examKey);
+    if (!exam) return;
+
+    const autoTitle = `${exam.name} Full Mock Test Series 2026`;
+    const autoExamName = exam.name;
+    const autoTagline = `Full-length mock tests, chapter-wise practice tests & previous year papers for ${exam.name}`;
+
+    // Map category
+    let autoCategory = exam.category || 'SSC';
+    if (autoCategory === 'State') autoCategory = 'State PSC';
+    const matchedDbCat = dbCategories.find(c => c.name.toLowerCase() === autoCategory.toLowerCase());
+    if (matchedDbCat) autoCategory = matchedDbCat.name;
+
+    // Formatted rich description
+    const autoDesc = `<h3><strong>Comprehensive Test Series for ${exam.name}</strong></h3>
+<p>Prepare thoroughly for <strong>${exam.name}</strong> with Abhyo's mock test series. Designed strictly according to the latest official syllabus and exam pattern released by ${exam.org || 'the official board'}.</p>
+<h4><strong>What is included in this series:</strong></h4>
+<ul>
+  <li>Full-Length Mock Tests strictly based on the latest exam pattern</li>
+  <li>Previous Year Question Papers (PYPs) with detailed step-by-step explanations</li>
+  <li>Subject-wise and Chapter-wise speed tests to strengthen weak areas</li>
+  <li>Real-time All India Ranking (AIR), percentile scores, and in-depth performance analytics</li>
+</ul>
+${Array.isArray(exam.syllabus) && exam.syllabus.length ? `<h4><strong>Key Syllabus Topics:</strong></h4><ul>${exam.syllabus.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
+${exam.eligibility ? `<p><strong>Eligibility:</strong> ${exam.eligibility}</p>` : ''}
+${exam.vacancies ? `<p><strong>Vacancies:</strong> ${typeof exam.vacancies === 'number' ? exam.vacancies.toLocaleString() : exam.vacancies} Posts</p>` : ''}
+<p>Start practicing now to boost your speed, accuracy, and confidence before the examination!</p>`;
+
+    const examSlug = exam.slug || exam.name;
+    const currentLinked = Array.isArray(form.linkedExams) ? form.linkedExams : [];
+    const updatedLinked = currentLinked.includes(examSlug) ? currentLinked : [...currentLinked, examSlug];
+
+    setForm(p => ({
+      ...p,
+      title: autoTitle,
+      examName: autoExamName,
+      tagline: autoTagline,
+      category: autoCategory,
+      description: autoDesc,
+      linkedExams: updatedLinked,
+      examDetails: {
+        organizer: exam.org || '',
+        applicationDate: exam.startDate || '',
+        lastDate: exam.lastDate || '',
+        examDate: exam.examDate || '',
+        vacancy: exam.vacancies ? String(exam.vacancies) : '',
+        website: exam.official || '',
+      },
+      eligibility: exam.eligibility ? [{ label: 'Eligibility', value: exam.eligibility }] : p.eligibility,
+      importantDates: exam.lastDate ? [{ event: 'Last Date to Apply', date: exam.lastDate }] : p.importantDates,
+    }));
+
+    setTouchedExamName(true);
+    toast.success(`✨ Auto-filled details from "${exam.name}"!`);
+  };
 
   const saveSelection = () => {
     const sel = window.getSelection();
@@ -300,6 +395,80 @@ export default function ExamSeriesForm() {
         gap: 22,
       }}>
 
+        {/* ⚡ Quick-Fill from Upcoming Government Exam */}
+        <div style={{
+          background: 'linear-gradient(135deg, #f0fdf4 0%, #eef2ff 100%)',
+          border: '1.5px solid #c7d2fe',
+          borderRadius: 14,
+          padding: '16px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          boxShadow: '0 2px 10px rgba(99,102,241,0.06)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(79,70,229,0.3)' }}>
+                <Zap size={18} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', margin: 0 }}>
+                  ⚡ Quick-Fill from Upcoming Government Exam
+                </h3>
+                <p style={{ fontSize: 11, color: '#6366f1', margin: 0, fontWeight: 500 }}>
+                  Select an upcoming exam to instantly populate Title, Category, Tagline &amp; comprehensive Description
+                </p>
+              </div>
+            </div>
+            {selectedUpcomingExam && (
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#d1fae5', padding: '3px 10px', borderRadius: 20 }}>
+                ✓ Ready to Apply
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              style={{ ...inputStyle, flex: 1, minWidth: 280, borderColor: '#a5b4fc', backgroundColor: '#fff', fontWeight: 600 }}
+              value={selectedUpcomingExam}
+              onChange={e => setSelectedUpcomingExam(e.target.value)}
+            >
+              <option value="">-- Choose an Upcoming Government Exam (SSC, Railway, Banking, UPSC, Defence, State) --</option>
+              {upcomingOptions.map(ex => {
+                const key = ex.slug || ex.id;
+                return (
+                  <option key={key} value={key}>
+                    {ex.name} ({ex.category || 'Govt Exam'}) {ex.vacancies ? `• ${typeof ex.vacancies === 'number' ? ex.vacancies.toLocaleString() : ex.vacancies} Posts` : ''}
+                  </option>
+                );
+              })}
+            </select>
+            <button
+              type="button"
+              disabled={!selectedUpcomingExam}
+              onClick={() => handleApplyAutofill(selectedUpcomingExam)}
+              style={{
+                padding: '10px 18px',
+                background: selectedUpcomingExam ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : '#cbd5e1',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 10,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: selectedUpcomingExam ? 'pointer' : 'not-allowed',
+                boxShadow: selectedUpcomingExam ? '0 2px 8px rgba(79,70,229,0.3)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Sparkles size={14} /> Auto-fill Details
+            </button>
+          </div>
+        </div>
+
         {/* 1. Series Title & Exam Name */}
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 14 }}>
           <div>
@@ -423,7 +592,111 @@ export default function ExamSeriesForm() {
           </div>
         )}
 
-        {/* 4. Thumbnail Image */}
+        {/* 4. Covered / Linked Upcoming Exams */}
+        <div style={{
+          background: '#f8fafc',
+          border: '1.5px solid #e2e8f0',
+          borderRadius: 14,
+          padding: '16px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <label style={{ ...labelStyle, margin: 0 }}>
+              <Layers size={15} style={{ color: '#6366f1' }} />
+              <span>Covered / Linked Upcoming Exams</span>
+              <span style={{ fontSize: 10, fontWeight: 500, color: '#94a3b8' }}>(Connect one or multiple exams to this series)</span>
+            </label>
+            <span style={{ fontSize: 11, color: '#4338ca', fontWeight: 700, background: '#e0e7ff', padding: '2px 10px', borderRadius: 12 }}>
+              {form.linkedExams.length} Exam{form.linkedExams.length !== 1 ? 's' : ''} Linked
+            </span>
+          </div>
+
+          <p style={{ fontSize: 11, color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+            Students viewing linked upcoming exams on Abhyo will see direct buttons to practice this test series. You can link multiple exams to create combo series (e.g. SSC CGL + CHSL + MTS).
+          </p>
+
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              style={{ ...inputStyle, flex: 1, minWidth: 260, backgroundColor: '#fff' }}
+              value={examToLink}
+              onChange={e => {
+                const val = e.target.value;
+                if (val && !form.linkedExams.includes(val)) {
+                  sf('linkedExams', [...form.linkedExams, val]);
+                  toast.success('Exam linked to series!');
+                }
+                setExamToLink('');
+              }}
+            >
+              <option value="">+ Add an Upcoming Exam covered by this test series...</option>
+              {upcomingOptions.map(ex => {
+                const key = ex.slug || ex.name;
+                const alreadyLinked = form.linkedExams.includes(key);
+                return (
+                  <option key={key} value={key} disabled={alreadyLinked}>
+                    {alreadyLinked ? `✓ ${ex.name} (Already Added)` : `${ex.name} (${ex.category || 'Govt'})`}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          {form.linkedExams.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+              {form.linkedExams.map(slug => {
+                const match = upcomingOptions.find(o => (o.slug || o.name) === slug);
+                const label = match ? match.name : slug;
+                const cat = match?.category || '';
+                return (
+                  <div
+                    key={slug}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      background: '#fff',
+                      border: '1.5px solid #c7d2fe',
+                      color: '#3730a3',
+                      padding: '5px 12px',
+                      borderRadius: 20,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                    }}
+                  >
+                    <span>🏛️ {label}</span>
+                    {cat && <span style={{ fontSize: 10, color: '#6366f1', background: '#eef2ff', padding: '1px 6px', borderRadius: 10 }}>{cat}</span>}
+                    <button
+                      type="button"
+                      onClick={() => sf('linkedExams', form.linkedExams.filter(s => s !== slug))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: 0,
+                        marginLeft: 2,
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      title="Remove exam"
+                    >
+                      <X size={13} style={{ color: '#ef4444' }} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ fontSize: 11, color: '#94a3b8', margin: 0 }}>
+              No exams linked yet. Use the dropdown above to link upcoming government exams.
+            </p>
+          )}
+        </div>
+
+        {/* 5. Thumbnail Image */}
         <div>
           <label style={labelStyle}>Thumbnail Image</label>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>

@@ -197,6 +197,23 @@ export default function ExamSeriesPage() {
             <span className="bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">{series.title}</span>
           </h1>
 
+          {/* Covered Upcoming Exams */}
+          {Array.isArray(series.linkedExams) && series.linkedExams.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap mt-1">
+              <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider">Prepares For:</span>
+              {series.linkedExams.map(slug => (
+                <Link
+                  key={slug}
+                  to={`/upcoming-exams/${slug}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 hover:bg-white/20 text-indigo-100 border border-white/15 transition-all backdrop-blur-md shadow-sm"
+                >
+                  <span>🏛️ {slug.replace(/-/g, ' ').toUpperCase()}</span>
+                  <span className="text-[10px] text-amber-300 font-normal">Exam Dates &amp; Notice →</span>
+                </Link>
+              ))}
+            </div>
+          )}
+
           {/* CTA row */}
           <div className="flex flex-wrap gap-3 mt-2">
             <a href="#tests" className="bg-white text-indigo-950 hover:bg-indigo-50 font-extrabold py-2.5 px-6 rounded-xl text-sm flex items-center gap-2 hover:-translate-y-0.5 transition-all shadow-[0_4px_20px_rgba(255,255,255,0.12)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.22)]">

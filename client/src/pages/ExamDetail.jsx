@@ -64,6 +64,23 @@ export default function ExamDetail() {
   const [exam, setExam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState([]);
+  const [linkedSeries, setLinkedSeries] = useState(null);
+
+  useEffect(() => {
+    // Check if there is an active Exam Series created for this upcoming exam
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/exam-series`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.data && Array.isArray(res.data)) {
+          const found = res.data.find(ser => 
+            ser.slug === slug || 
+            (Array.isArray(ser.linkedExams) && ser.linkedExams.includes(slug))
+          );
+          if (found) setLinkedSeries(found);
+        }
+      })
+      .catch(() => {});
+  }, [slug]);
 
   useEffect(() => {
     setLoading(true);
@@ -75,6 +92,10 @@ export default function ExamDetail() {
           const staticExam = EXAMS.find(e => e.slug === slug);
           setExam(staticExam || null);
           return;
+        }
+
+        if (s && !linkedSeries) {
+          setLinkedSeries(s);
         }
 
         const ed = s.examDetails || {};
@@ -300,10 +321,18 @@ export default function ExamDetail() {
                 style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', boxShadow: '0 4px 16px rgba(99,102,241,0.3)' }}>
                 <ExternalLink size={14} className="stroke-[1.5]" /> Apply on Official Site
               </a>
-              <Link to="/exam-series"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-light text-sm text-indigo-200 border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/15 hover:text-white transition-all active:scale-95">
-                <BookOpen size={14} className="stroke-[1.5]" /> Practice Mock Tests
-              </Link>
+              {linkedSeries ? (
+                <Link to={`/exam-series/${linkedSeries.slug}`}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white transition-all hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/25"
+                  style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}>
+                  <BookOpen size={14} className="stroke-[2]" /> Practice {linkedSeries.examName || 'Mock Tests'} →
+                </Link>
+              ) : (
+                <Link to={`/exam-series?category=${encodeURIComponent(exam.category || '')}`}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-light text-sm text-indigo-200 border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/15 hover:text-white transition-all active:scale-95">
+                  <BookOpen size={14} className="stroke-[1.5]" /> Practice Mock Tests
+                </Link>
+              )}
             </div>
           </div>
 
@@ -447,6 +476,28 @@ export default function ExamDetail() {
               />
             </div>
           </section>
+
+          {/* Linked Test Series Highlight Card */}
+          {linkedSeries && (
+            <section className="rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-indigo-950/20 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)' }}>
+              <div className="space-y-2 relative z-10">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-300/30 text-xs font-bold uppercase tracking-wider">
+                  ⭐ Recommended Test Series
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-white">{linkedSeries.title}</h3>
+                <p className="text-xs sm:text-sm text-indigo-200/90 max-w-xl">
+                  {linkedSeries.tagline || `Complete mock test series covering latest exam pattern, previous year questions & detailed analytics for ${exam.name}.`}
+                </p>
+              </div>
+              <Link
+                to={`/exam-series/${linkedSeries.slug}`}
+                className="relative z-10 px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-900 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg shadow-amber-500/30 transition-all hover:scale-105 whitespace-nowrap active:scale-95"
+              >
+                Start Mock Test Series →
+              </Link>
+            </section>
+          )}
 
           {/* Official Notification Card */}
           {exam.notificationUrl && (
